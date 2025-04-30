@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Auth\AuthLoginRequest;
+use App\Http\Requests\Api\Auth\AuthRegisterRequest;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -10,16 +12,13 @@ use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
-    public function login(Request $request) 
+    public function login(AuthLoginRequest $request) 
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        $data = $request->validated();
     
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $data['email'])->first();
     
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($data['password'], $user->password)) {
             return response()->json([
                 'message' => 'Неверные учетные данные',
             ], 401);
@@ -28,19 +27,15 @@ class AuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
     
         return response()->json([
-            'user' => $user,
+            'success' => true,
             'token' => $token,
         ]);
     }
 
 
-    public function register(Request $request)
+    public function register(AuthRegisterRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+       $data = $request->validated();
 
 
         if (request()->header('X-GUEST-ID')) {
@@ -55,22 +50,15 @@ class AuthController extends Controller
                 ], 401);
             }  
             
-            $cartGuest = DB::table('cart_items')->where('guest_id', $guest->id)->first();
+            $cartGuest = DB::table('carts')->where('guest_id', $guest->id)->first();
         }
 
 
-        
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        
+        $user = User::create($data);
         $token = $user->createToken('auth-token')->plainTextToken;
         
         if (isset($cartGuest)) {
-            DB::table('cart_items')
+            DB::table('carts')
                 ->where('guest_id', $guest->id)
                 ->update(['user_id' => $user->id, 'guest_id' => null]);
 
@@ -78,7 +66,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'user' => $user,
+            'success' => true,
             'token' => $token,
         ], 201);
     }

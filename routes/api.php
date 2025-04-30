@@ -1,28 +1,57 @@
 <?php
 
-use App\Http\Controllers\Api\OrderController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\Admin\AdminDiscountController;
+use App\Http\Controllers\Api\Admin\AdminOrderController;
+use App\Http\Controllers\Api\Order\OrderController;
+use App\Http\Controllers\Api\Product\ProductController;
+use App\Http\Controllers\Api\User\UserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\HomeController;
-use App\Http\Controllers\Api\CartController;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\Cart\CartController;
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Admin\AdminController;
 
 
-Route::get('/assortment', [HomeController::class, 'assortment'])->name('home.assortment');
+
+
+
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
-Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
-Route::post('/order', [OrderController::class, 'create'])->name('order.create');
-Route::middleware('auth:sanctum')->get('/myOrder', [HomeController::class, 'myOrder'])->name('order.myOrder');
-Route::middleware('auth:sanctum')->get('/history', [OrderController::class, 'history'])->name('order.history');
-Route::middleware('auth:sanctum')->post('/admin/store', [AdminController::class, 'store'])->name('admin.store');
-Route::middleware('auth:sanctum')->patch('/admin/update', [AdminController::class, 'update'])->name('admin.update');
-Route::middleware('auth:sanctum')->delete('/admin/delete', [AdminController::class, 'delete'])->name('admin.delete');
-Route::middleware('auth:sanctum')->get('/admin/list', [AdminController::class, 'list'])->name('admin.list');
-Route::middleware('auth:sanctum')->patch('/admin/order', [AdminController::class, 'order'])->name('admin.order');
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::post('/order', [OrderController::class, 'create'])->name('order.create');
+
+Route::controller(AuthController::class)->group(function () {
+    Route::post('/login', 'login')->name('auth.login');
+    Route::post('/register', 'register')->name('auth.register');
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::controller(UserController::class)->group(function () {
+        Route::get('/current/order', 'currentOrder')->name('order.current');
+        Route::get('/history', 'historyOrder')->name('order.history');
+    });
+});
+
+
+Route::controller(ProductController::class)->group(function () {
+    Route::get('/product',  'product')->name('index.product');
+    Route::post('product/categories', 'categories')->name('categories.product');
+    Route::post('product/search', 'search')->name('search.product');
+});
+
+
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::controller(AdminController::class)->group(function () {
+        Route::post('/admin/store', 'store')->name('admin.store');
+        Route::patch('/admin/update', 'update')->name('admin.update');
+        Route::delete('/admin/delete', 'delete')->name('admin.delete');
+    });
+    Route::controller(AdminOrderController::class)->group(function () {
+        Route::get('/admin/list', 'listOrder')->name('admin.list');
+        Route::patch('/admin/order/update', 'orderUpdate')->name('admin.updateOrder');
+    });
+    Route::controller(AdminDiscountController::class)->group(function () {
+        Route::patch('admin/discount/set', 'setDiscount')->name('admin.set');
+        Route::patch('admin/discount/remove', 'removeDiscount')->name('admin.remove');
+    });
+});
+
 
