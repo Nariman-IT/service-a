@@ -1,34 +1,11 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Admin\AdminDiscountController;
 use App\Http\Controllers\Api\Admin\AdminOrderController;
-use App\Http\Controllers\Api\Order\OrderController;
-use App\Http\Controllers\Api\Product\ProductController;
-use App\Http\Controllers\Api\User\UserController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\Cart\CartController;
-use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Admin\AdminController;
+use App\Http\Controllers\Api\Product\ProductController;
 
-
-
-
-
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-
-Route::post('/order', [OrderController::class, 'create'])->name('order.create');
-
-Route::controller(AuthController::class)->group(function () {
-    Route::post('/login', 'login')->name('auth.login');
-    Route::post('/register', 'register')->name('auth.register');
-});
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::controller(UserController::class)->group(function () {
-        Route::get('/current/order', 'currentOrder')->name('order.current');
-        Route::get('/history', 'historyOrder')->name('order.history');
-    });
-});
 
 
 Route::controller(ProductController::class)->group(function () {
